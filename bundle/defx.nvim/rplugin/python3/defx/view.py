@@ -124,9 +124,8 @@ class View(object):
                 visual_start=visual_start,
                 visual_end=visual_end,
             )
-            ret = action.do_action(self, defx, action_name, context)
-            if ret:
-                error(self._vim, 'Invalid action_name:' + action_name)
+            if ret := action.do_action(self, defx, action_name, context):
+                error(self._vim, f'Invalid action_name:{action_name}')
                 return
 
     def debug(self, expr: typing.Any) -> None:
@@ -141,7 +140,7 @@ class View(object):
         # Clear previewed buffers
         for bufnr in self._vim.vars['defx#_previewed_buffers'].keys():
             if not self._vim.call('win_findbuf', bufnr):
-                self._vim.command('silent bdelete ' + str(bufnr))
+                self._vim.command(f'silent bdelete {str(bufnr)}')
         self._vim.vars['defx#_previewed_buffers'] = {}
 
     def quit(self) -> None:
@@ -164,7 +163,7 @@ class View(object):
             self._vim.command('close')
             self._vim.call('win_gotoid', self._context.prev_winid)
         elif self._check_bufnr(self._prev_bufnr):
-            self._vim.command('buffer ' + str(self._prev_bufnr))
+            self._vim.command(f'buffer {str(self._prev_bufnr)}')
         elif self._check_bufnr(self._context.prev_last_bufnr):
             self._vim.command('buffer ' +
                               str(self._context.prev_last_bufnr))
@@ -235,10 +234,7 @@ class View(object):
 
     def get_cursor_candidate(
             self, cursor: int) -> typing.Dict[str, typing.Any]:
-        if len(self._candidates) < cursor:
-            return {}
-        else:
-            return self._candidates[cursor - 1]
+        return {} if len(self._candidates) < cursor else self._candidates[cursor - 1]
 
     def get_selected_candidates(
             self, cursor: int, index: int
@@ -252,19 +248,23 @@ class View(object):
         return [x for x in candidates if x.get('_defx_index', -1) == index]
 
     def get_candidate_pos(self, path: Path, index: int) -> int:
-        for [pos, candidate] in enumerate(self._candidates):
-            if (candidate['_defx_index'] == index and
-                    candidate['action__path'] == path):
-                return pos
-        return -1
+        return next(
+            (
+                pos
+                for [pos, candidate] in enumerate(self._candidates)
+                if (
+                    candidate['_defx_index'] == index
+                    and candidate['action__path'] == path
+                )
+            ),
+            -1,
+        )
 
     def cd(self, defx: Defx, source_name: str,
            path: str, cursor: int) -> None:
         history = defx._cursor_history
 
-        # Save previous cursor position
-        candidate = self.get_cursor_candidate(cursor)
-        if candidate:
+        if candidate := self.get_cursor_candidate(cursor):
             history[defx._cwd] = candidate['action__path']
 
         global_histories = self._vim.vars['defx#_histories']
@@ -397,14 +397,14 @@ class View(object):
         if not self._vim.call('buflisted', self._prev_bufnr):
             return
 
-        prev_bufname = self._vim.call('bufname',
-                                      self._context.prev_last_bufnr)
-        if not prev_bufname:
+        if prev_bufname := self._vim.call(
+            'bufname', self._context.prev_last_bufnr
+        ):
+            self._vim.call('setreg', '#',
+                           self._vim.call('fnameescape', prev_bufname))
+        else:
             # ignore noname buffer
             return
-
-        self._vim.call('setreg', '#',
-                       self._vim.call('fnameescape', prev_bufname))
 
     def _remove_nested_path(self, defx: Defx, path: Path) -> None:
         if str(path) in defx._nested_candidates:
@@ -551,13 +551,9 @@ class View(object):
         if self._vim.call('bufloaded', self._bufnr):
             command = ('buffer' if no_split else 'sbuffer')
             self._vim.command(
-                'silent keepalt %s %s %s %s' % (
-                    self._context.direction,
-                    vertical,
-                    command,
-                    self._bufnr,
-                )
+                f'silent keepalt {self._context.direction} {vertical} {command} {self._bufnr}'
             )
+
             if self._context.resume:
                 self._init_window()
                 return False
@@ -565,23 +561,17 @@ class View(object):
             bufnr = self._vim.call('bufadd', self._bufname)
             command = ('buffer' if no_split else 'sbuffer')
             self._vim.command(
-                'silent keepalt %s %s %s %s' % (
-                    self._context.direction,
-                    vertical,
-                    command,
-                    bufnr,
-                )
+                f'silent keepalt {self._context.direction} {vertical} {command} {bufnr}'
             )
+
         else:
             command = ('edit' if no_split else 'new')
             self._vim.call(
                 'defx#util#execute_path',
-                'silent keepalt %s %s %s ' % (
-                    self._context.direction,
-                    vertical,
-                    command,
-                ),
-                self._bufname)
+                f'silent keepalt {self._context.direction} {vertical} {command} ',
+                self._bufname,
+            )
+
         return True
 
     def _init_all_columns(self) -> None:
@@ -655,11 +645,10 @@ class View(object):
                 within_variable = False
 
     def _init_column_syntax(self) -> None:
-        commands: typing.List[str] = []
+        commands: typing.List[str] = [
+            f'silent! syntax clear {syntax}' for syntax in self._prev_syntaxes
+        ]
 
-        for syntax in self._prev_syntaxes:
-            commands.append(
-                'silent! syntax clear ' + syntax)
 
         if self._proptypes:
             self._clear_prop_types()
@@ -806,8 +795,10 @@ class View(object):
             typing.Tuple[str, int, int, int]]) -> None:
         commands = []
         if self._has_textprop:
-            for proptype in self._proptypes:
-                commands.append(['prop_remove', [{'type': proptype}]])
+            commands.extend(
+                ['prop_remove', [{'type': proptype}]]
+                for proptype in self._proptypes
+            )
 
             for highlight in columns_highlights:
                 if highlight[0] not in self._proptypes:

@@ -27,9 +27,7 @@ class Base(LoggingMixin):
             'deoplete#custom#_get_filter', self.name)
         if var_name in custom_vars:
             return custom_vars[var_name]
-        if var_name in self.vars:
-            return self.vars[var_name]
-        return None
+        return self.vars[var_name] if var_name in self.vars else None
 
     @abstractmethod
     def filter(self, context: UserContext) -> Candidates:

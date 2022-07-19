@@ -21,7 +21,7 @@ def asciiedges(seen, rev, parents):
     seen[nodeidx:nodeidx + 1] = newparents
     edges = [(nodeidx, seen.index(p)) for p in knownparents]
 
-    if len(newparents) > 0:
+    if newparents:
         edges.append((nodeidx, nodeidx))
     if len(newparents) > 1:
         edges.append((nodeidx, nodeidx + 1))
@@ -32,17 +32,14 @@ def asciiedges(seen, rev, parents):
 
 def get_nodeline_edges_tail(
         node_index, p_node_index, n_columns, n_columns_diff, p_diff, fix_tail):
-    if fix_tail and n_columns_diff == p_diff and n_columns_diff != 0:
-        # Still going in the same non-vertical direction.
-        if n_columns_diff == -1:
-            start = max(node_index + 1, p_node_index)
-            tail = ["|", " "] * (start - node_index - 1)
-            tail.extend(["/", " "] * (n_columns - start))
-            return tail
-        else:
-            return ["\\", " "] * (n_columns - node_index - 1)
-    else:
+    if not fix_tail or n_columns_diff != p_diff or n_columns_diff == 0:
         return ["|", " "] * (n_columns - node_index - 1)
+    if n_columns_diff != -1:
+        return ["\\", " "] * (n_columns - node_index - 1)
+    start = max(node_index + 1, p_node_index)
+    tail = ["|", " "] * (start - node_index - 1)
+    tail.extend(["/", " "] * (n_columns - start))
+    return tail
 
 
 def draw_edges(edges, nodeline, interline):
@@ -139,9 +136,7 @@ def ascii(state, type, char, text, coldata, verbose):
     draw_edges(edges, nodeline, shift_interline)
 
     # lines is the list of all graph lines to print
-    lines = [nodeline]
-    lines.append(shift_interline)
-
+    lines = [nodeline, shift_interline]
     # make sure that there are as many graph lines as there are
     # log strings
     if any("/" in s for s in lines) or verbose:
@@ -191,11 +186,8 @@ def generate(verbose, num_header_lines, first_visible_line, last_visible_line, i
     line_number = num_header_lines
     for idx, part in list(enumerate(dag)):
         node, parents = part
-        if node.time:
-            age_label = age(int(node.time))
-        else:
-            age_label = 'Original'
-        line = '[%s] %s' % (node.n, age_label)
+        age_label = age(int(node.time)) if node.time else 'Original'
+        line = f'[{node.n}] {age_label}'
         if node.n == current:
             char = '@'
         elif node.saved:
@@ -224,9 +216,7 @@ def age(ts):
     '''turn a timestamp into an age string.'''
 
     def plural(t, c):
-        if c == 1:
-            return t
-        return t + "s"
+        return t if c == 1 else f"{t}s"
 
     def fmt(t, c):
         return "%d %s" % (int(c), plural(t, c))
@@ -243,6 +233,6 @@ def age(ts):
     for t, s in agescales:
         n = delta // s
         if n >= 2 or s == 1:
-            return '%s ago' % fmt(t, n)
+            return f'{fmt(t, n)} ago'
 
     return "<1 min ago"

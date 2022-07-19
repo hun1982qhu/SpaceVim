@@ -15,8 +15,7 @@ class Node(object):
         self.time = time
 
     def __repr__(self):
-        return "[n=%s,parent=%s,time=%s,curhead=%s,saved=%s]" % \
-            (self.n,self.parent,self.time,self.curhead,self.saved)
+        return f"[n={self.n},parent={self.parent},time={self.time},curhead={self.curhead},saved={self.saved}]"
 
 class Nodes(object):
     def __init__(self):
@@ -87,7 +86,7 @@ class Nodes(object):
         root = Node(0, None, False, 0, 0)
         self._make_nodes(ut['entries'], nodes, root)
         nodes.append(root)
-        nmap = dict((node.n, node) for node in nodes)
+        nmap = {node.n: node for node in nodes}
 
         # cache values for later use
         self.seq_last = ut['seq_last']
@@ -100,23 +99,21 @@ class Nodes(object):
         """ Return the number of the current change. """
         self._validate_cache()
         nodes, nmap = self.make_nodes()
-        _curhead_l = list(itertools.dropwhile(lambda n: not n.curhead, nodes))
-
-        if _curhead_l:
-            current = _curhead_l[0].parent.n
-        else:
-            current = int(util.vim().eval('changenr()'))
-
-        return current
+        return (
+            _curhead_l[0].parent.n
+            if (
+                _curhead_l := list(
+                    itertools.dropwhile(lambda n: not n.curhead, nodes)
+                )
+            )
+            else int(util.vim().eval('changenr()'))
+        )
 
     def _fmt_time(self,t):
         return time.strftime('%Y-%m-%d %I:%M:%S %p', time.localtime(float(t)))
 
     def _get_lines(self,node):
-        n = 0
-
-        if node:
-            n = node.n
+        n = node.n if node else 0
         if n not in self.lines:
             util._undo_to(n)
             self.lines[n] = util.vim().current.buffer[:]
@@ -125,7 +122,7 @@ class Nodes(object):
 
     def change_preview_diff(self, before, after):
         self._validate_cache()
-        key = "%s-%s-cpd"%(before.n,after.n)
+        key = f"{before.n}-{after.n}-cpd"
 
         if key in self.diffs:
             return self.diffs[key]
@@ -171,7 +168,7 @@ class Nodes(object):
             bn = before.n
             an = after.n
 
-        key = "%s-%s-pd-%s"%(bn,an,unified)
+        key = f"{bn}-{an}-pd-{unified}"
         needs_oneline = inline and key not in self.diff_has_oneline
 
         if key in self.diffs and not needs_oneline:

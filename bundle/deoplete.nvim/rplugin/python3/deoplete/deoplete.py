@@ -200,14 +200,14 @@ class Deoplete(logger.LoggingMixin):
         if max_list > 0:
             all_candidates = all_candidates[: max_list]
 
-        candidate_marks = self._vim.call(
-            'deoplete#custom#_get_option', 'candidate_marks')
-        if candidate_marks:
+        if candidate_marks := self._vim.call(
+            'deoplete#custom#_get_option', 'candidate_marks'
+        ):
             all_candidates = copy.deepcopy(all_candidates)
             for i, candidate in enumerate(all_candidates):
                 mark = (candidate_marks[i] if i < len(candidate_marks) and
                         candidate_marks[i] else ' ')
-                candidate['menu'] = mark + ' ' + candidate.get('menu', '')
+                candidate['menu'] = f'{mark} ' + candidate.get('menu', '')
 
         return (is_async, needs_poll, complete_position, all_candidates)
 
@@ -228,13 +228,11 @@ class Deoplete(logger.LoggingMixin):
             return
 
         sources = (
-            os.path.join('rplugin', 'python3', 'deoplete',
-                         source, '*.py'),
-            os.path.join('rplugin', 'python3', 'deoplete',
-                         source + 's', '*.py'),
-            os.path.join('rplugin', 'python3', 'deoplete',
-                         source, '*', '*.py'),
+            os.path.join('rplugin', 'python3', 'deoplete', source, '*.py'),
+            os.path.join('rplugin', 'python3', 'deoplete', f'{source}s', '*.py'),
+            os.path.join('rplugin', 'python3', 'deoplete', source, '*', '*.py'),
         )
+
 
         for src in sources:
             for path in self._runtimepath_list:

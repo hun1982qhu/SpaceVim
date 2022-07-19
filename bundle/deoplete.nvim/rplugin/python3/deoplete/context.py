@@ -30,7 +30,7 @@ class Context(object):
             text, event, self._vim.call('getbufvar', '%', '&filetype'))
 
         m = re.search(r'\w$', text)
-        word_len = len(m.group(0)) if m else 0
+        word_len = len(m[0]) if m else 0
         max_width = self._vim.call('winwidth', 0) - self._vim.call('col', '.')
         max_width += word_len
 
@@ -136,15 +136,13 @@ class Context(object):
             'bufnr': bufnr,
             'input': text,
             'prev_filetype': filetype,
-            'filetype': (
-                self._vim.call('context_filetype#get_filetype')
-                if exists_context_filetype
-                else (filetype if filetype else 'nothing')),
-            'filetypes': (
-                self._vim.call('context_filetype#get_filetypes')
-                if exists_context_filetype
-                else filetype.split('.')),
-            'same_filetypes': (
-                self._vim.call('context_filetype#get_same_filetypes')
-                if exists_context_filetype else []),
+            'filetype': self._vim.call('context_filetype#get_filetype')
+            if exists_context_filetype
+            else filetype or 'nothing',
+            'filetypes': self._vim.call('context_filetype#get_filetypes')
+            if exists_context_filetype
+            else filetype.split('.'),
+            'same_filetypes': self._vim.call('context_filetype#get_same_filetypes')
+            if exists_context_filetype
+            else [],
         }

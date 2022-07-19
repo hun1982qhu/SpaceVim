@@ -13,7 +13,7 @@ import urllib.request, urllib.error
 
 # Repository Name
 repo_name = 'koron/vim-kaoriya'
-gh_releases_url = 'https://api.github.com/repos/' + repo_name + '/releases'
+gh_releases_url = f'https://api.github.com/repos/{repo_name}/releases'
 
 # Asset name checker
 def does_skip_asset(asset):
@@ -57,13 +57,13 @@ def get_rel_info(url, auth):
         # Authenticated requests are allowed up to 5,000 requests per hour.
         # See: https://developer.github.com/v3/#rate-limiting
         request = urllib.request.Request(url)
-        request.add_header("Authorization", "token " + auth)
+        request.add_header("Authorization", f"token {auth}")
     else:
         request = url
     try:
         response = urllib.request.urlopen(request)
     except urllib.error.HTTPError as err:
-        print('GitHub release not found. (%s)' % err.reason, file=sys.stderr)
+        print(f'GitHub release not found. ({err.reason})', file=sys.stderr)
         exit(1)
     return json.load(io.StringIO(str(response.read(), 'utf-8')))
 
@@ -79,10 +79,7 @@ def reporthook(count, blocksize, totalsize):
 # Download the files
 def download(args, rel_info):
     for asset in rel_info['assets']:
-        if args.filename:
-            name = args.filename
-        else:
-            name = asset['name']
+        name = args.filename or asset['name']
         if does_skip_asset(asset):
             continue
         if args.arch != 'all' and asset['name'].find(args.arch) < 0:
@@ -92,10 +89,7 @@ def download(args, rel_info):
             continue
         print('Downloading from:', asset['browser_download_url'])
         print('Downloading to:', name)
-        if args.noprogress:
-            hook = None
-        else:
-            hook = reporthook
+        hook = None if args.noprogress else reporthook
         urllib.request.urlretrieve(asset['browser_download_url'], name, hook)
         # Set timestamp
         asset_time = time.strptime(asset['updated_at'], '%Y-%m-%dT%H:%M:%SZ')
@@ -119,7 +113,7 @@ def main():
             print('GitHub release not found.', file=sys.stderr)
             exit(1)
     else:
-        gh_release_url = gh_releases_url + '/latest'
+        gh_release_url = f'{gh_releases_url}/latest'
 
     rel_info = get_rel_info(gh_release_url, args.auth)
     print('Last release:', rel_info['name'])

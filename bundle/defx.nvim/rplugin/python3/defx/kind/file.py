@@ -79,7 +79,7 @@ def check_overwrite(view: View, dest: Path, src: Path) -> Path:
     elif choice == 4 and d_mtime < s_mtime:
         ret = src
     elif choice == 5:
-        ret = Path(str(dest) + '_')
+        ret = Path(f'{str(dest)}_')
     return ret
 
 
@@ -134,7 +134,9 @@ def _copy(view: View, defx: Defx, context: Context) -> None:
     message = 'Copy to the clipboard: {}'.format(
         str(context.targets[0]['action__path'])
         if len(context.targets) == 1
-        else str(len(context.targets)) + ' files')
+        else f'{len(context.targets)} files'
+    )
+
     view.print_msg(message)
 
     view._clipboard.action = ClipboardAction.COPY
@@ -157,9 +159,7 @@ def _drop(view: View, defx: Defx, context: Context) -> None:
             continue
 
         bufnr = view._vim.call('bufnr', f'^{path}$')
-        winids = view._vim.call('win_findbuf', bufnr)
-
-        if winids:
+        if winids := view._vim.call('win_findbuf', bufnr):
             view._vim.call('win_gotoid', winids[0])
         else:
             if context.prev_winid != view._winid and view._vim.call(
@@ -191,8 +191,7 @@ def _execute_command(view: View, defx: Defx, context: Context) -> None:
     command = context.args[0] if context.args else view._vim.call(
         'input', 'Command: ', '', 'shellcmd')
 
-    output = view._vim.call('system', command)
-    if output:
+    if output := view._vim.call('system', command):
         view.print_msg(output)
 
     cd(view._vim, save_cwd)
@@ -215,7 +214,9 @@ def _move(view: View, defx: Defx, context: Context) -> None:
     message = 'Move to the clipboard: {}'.format(
         str(context.targets[0]['action__path'])
         if len(context.targets) == 1
-        else str(len(context.targets)) + ' files')
+        else f'{len(context.targets)} files'
+    )
+
     view.print_msg(message)
 
     view._clipboard.action = ClipboardAction.MOVE
@@ -513,7 +514,9 @@ def _remove(view: View, defx: Defx, context: Context) -> None:
         message = 'Are you sure you want to delete {}?'.format(
             str(context.targets[0]['action__path'])
             if len(context.targets) == 1
-            else str(len(context.targets)) + ' files')
+            else f'{len(context.targets)} files'
+        )
+
         if not confirm(view._vim, message):
             return
 
@@ -546,7 +549,9 @@ def _remove_trash(view: View, defx: Defx, context: Context) -> None:
         message = 'Are you sure you want to delete {}?'.format(
             str(context.targets[0]['action__path'])
             if len(context.targets) == 1
-            else str(len(context.targets)) + ' files')
+            else f'{len(context.targets)} files'
+        )
+
         if not confirm(view._vim, message):
             return
 

@@ -22,11 +22,11 @@ class Source(Base):
             'values(neosnippet#helpers#get_completion_snippets())')
 
     def gather_candidates(self, context):
-        candidates = []
-        for snippet in self._snippets:
-            candidates.append({
+        return [
+            {
                 'word': snippet['word'],
                 'abbr': '{:<50} {}'.format(snippet['word'], snippet['menu_abbr']),
                 'action__text': snippet['word'],
-            })
-        return candidates
+            }
+            for snippet in self._snippets
+        ]

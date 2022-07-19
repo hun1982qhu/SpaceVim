@@ -77,9 +77,7 @@ class Base(LoggingMixin):
             'deoplete#custom#_get_source_vars', self.name)
         if var_name in custom_vars:
             return custom_vars[var_name]
-        if var_name in self.vars:
-            return self.vars[var_name]
-        return None
+        return self.vars[var_name] if var_name in self.vars else None
 
     def get_filetype_var(self, filetype: str,
                          var_name: str) -> typing.Optional[typing.Any]:
@@ -97,4 +95,4 @@ class Base(LoggingMixin):
         return self.input_patterns.get(ft, self.input_pattern)
 
     def get_buf_option(self, option: str) -> typing.Any:
-        return self.vim.call('getbufvar', '%', '&' + option)
+        return self.vim.call('getbufvar', '%', f'&{option}')

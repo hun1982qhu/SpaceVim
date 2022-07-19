@@ -39,10 +39,10 @@ def _build_candidate(plugin_context):
         # Fail silently
         revision = ''
         branch = None
-    rev = revision if branch is None else '%s (%s)' % (branch, revision[:7])
+    rev = revision if branch is None else f'{branch} ({revision[:7]})'
     return {
         'word': name.strip(),
-        'abbr': name.strip() if not rev else '%s -- %s' % (name.strip(), rev.strip()),
+        'abbr': f'{name.strip()} -- {rev.strip()}' if rev else name.strip(),
         'action__path': path,
     }
 
@@ -51,6 +51,4 @@ def _resolve_ref(git, ref, branch=None):
     with open(os.path.join(git, ref)) as fi:
         content = fi.readline()
     m = REF_PATTERN.match(content)
-    if not m:
-        return (content, branch)
-    return _resolve_ref(git, m.group(1), m.group(2))
+    return _resolve_ref(git, m.group(1), m.group(2)) if m else (content, branch)

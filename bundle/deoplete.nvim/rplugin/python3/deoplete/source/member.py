@@ -51,16 +51,16 @@ class Source(Base):
                           context['input'])
             if m is None or prefix_pattern == '':
                 continue
-            self._prefix = re.sub(r'\w*$', '', m.group(0))
-            m = re.search(r'\w*$', context['input'])
-            if m:
+            self._prefix = re.sub(r'\w*$', '', m[0])
+            if m := re.search(r'\w*$', context['input']):
                 return m.start()
         return -1
 
     def gather_candidates(self, context: UserContext) -> Candidates:
-        return [{'word': x} for x in
-                parse_buffer_pattern(
-                    getlines(self.vim),
-                    r'(?<=' + re.escape(self._prefix) + r')\w+'
-                )
-                if x != context['complete_str']]
+        return [
+            {'word': x}
+            for x in parse_buffer_pattern(
+                getlines(self.vim), f'(?<={re.escape(self._prefix)}' + r')\w+'
+            )
+            if x != context['complete_str']
+        ]

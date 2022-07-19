@@ -51,24 +51,20 @@ def do_action(view: View, defx: Defx,
         view.redraw()
 
     if ActionAttr.CURSOR_TARGET in action.attr:
-        # Use cursor candidate only
-        cursor_candidate = view.get_cursor_candidate(context.cursor)
-        if not cursor_candidate:
-            return True
-        context = context._replace(
-            targets=[cursor_candidate],
-        )
+        if cursor_candidate := view.get_cursor_candidate(context.cursor):
+            context = context._replace(
+                targets=[cursor_candidate],
+            )
 
+        else:
+            return True
     action.func(view, defx, context)
 
     if action_name != 'repeat':
         view._prev_action = action_name
 
-    if ActionAttr.MARK in action.attr:
+    if ActionAttr.MARK in action.attr or ActionAttr.TREE in action.attr:
         # Update marks
-        view.update_candidates()
-        view.redraw()
-    elif ActionAttr.TREE in action.attr:
         view.update_candidates()
         view.redraw()
     elif ActionAttr.REDRAW in action.attr:

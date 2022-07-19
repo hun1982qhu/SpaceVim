@@ -42,8 +42,7 @@ class Source(Base):
             self.get_var('force_completion_length'))  # type: ignore
         if pos < 0 and force_completion_length >= 0:
             fmt = '[a-zA-Z0-9.-]{{{}}}$'.format(force_completion_length)
-            m = re.search(fmt, context['input'])
-            if m:
+            if m := re.search(fmt, context['input']):
                 return m.start()
         return pos if pos < 0 else pos + 1
 
@@ -58,7 +57,7 @@ class Source(Base):
         p = self._longest_path_that_exists(context, input_str)
         if not p or p == '/' or re.search('//+$', p):
             return []
-        complete_str = self._substitute_path(context, dirname(p) + '/')
+        complete_str = self._substitute_path(context, f'{dirname(p)}/')
         if not os.path.isdir(complete_str):
             return []
         hidden = context['complete_str'].find('.') == 0
@@ -72,8 +71,9 @@ class Source(Base):
             pass
 
         dirs, files = contents
-        return [{'word': x, 'abbr': x + '/'} for x in dirs
-                ] + [{'word': x} for x in files]
+        return [{'word': x, 'abbr': f'{x}/'} for x in dirs] + [
+            {'word': x} for x in files
+        ]
 
     def _longest_path_that_exists(self, context: UserContext,
                                   input_str: str) -> str:
@@ -86,15 +86,13 @@ class Source(Base):
         return existing_paths[-1] if existing_paths else ''
 
     def _substitute_path(self, context: UserContext, path: str) -> str:
-        m = re.match(r'(\.{1,2})/+', path)
-        if m:
+        if m := re.match(r'(\.{1,2})/+', path):
             if self.get_var('enable_buffer_path') and context['bufpath']:
                 base = context['bufpath']
             else:
                 base = os.path.join(context['cwd'], 'x')
 
-            for _ in m.group(1):
+            for _ in m[1]:
                 base = dirname(base)
-            return os.path.abspath(os.path.join(
-                base, path[len(m.group(0)):])) + '/'
+            return (os.path.abspath(os.path.join(base, path[len(m[0]):])) + '/')
         return expand(path)

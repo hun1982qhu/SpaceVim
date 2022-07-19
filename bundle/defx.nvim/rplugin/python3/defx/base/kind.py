@@ -159,10 +159,7 @@ def _load_session(view: View, defx: Defx, context: Context) -> None:
 def _multi(view: View, defx: Defx, context: Context) -> None:
     for arg in context.args:
         args: typing.List[str]
-        if isinstance(arg, list):
-            args = arg
-        else:
-            args = [arg]
+        args = arg if isinstance(arg, list) else [arg]
         do_action(view, defx, args[0], context._replace(args=args[1:]))
 
 
@@ -198,8 +195,11 @@ def _open_tree(view: View, defx: Defx, context: Context) -> None:
         attr=ActionAttr.TREE | ActionAttr.CURSOR_TARGET)
 def _open_tree_recursive(view: View, defx: Defx, context: Context) -> None:
     level = context.args[0] if context.args else '20'
-    _open_tree(view, defx, context._replace(
-        args=context.args + ['recursive:' + level]))
+    _open_tree(
+        view,
+        defx,
+        context._replace(args=context.args + [f'recursive:{level}']),
+    )
 
 
 @action(name='open_or_close_tree',
@@ -286,11 +286,10 @@ def _toggle_ignored_files(view: View, defx: Defx, context: Context) -> None:
 
 @action(name='toggle_select', attr=ActionAttr.MARK | ActionAttr.NO_TAGETS)
 def _toggle_select(view: View, defx: Defx, context: Context) -> None:
-    candidate = view.get_cursor_candidate(context.cursor)
-    if not candidate:
+    if candidate := view.get_cursor_candidate(context.cursor):
+        candidate['is_selected'] = not candidate['is_selected']
+    else:
         return
-
-    candidate['is_selected'] = not candidate['is_selected']
 
 
 @action(name='toggle_select_all', attr=ActionAttr.MARK | ActionAttr.NO_TAGETS)
@@ -321,11 +320,7 @@ def _toggle_sort(view: View, defx: Defx, context: Context) -> None:
     Toggle the current sort method.
     """
     sort = context.args[0] if context.args else ''
-    if sort == defx._sort_method:
-        # Use default sort method
-        defx._sort_method = context.sort
-    else:
-        defx._sort_method = sort
+    defx._sort_method = context.sort if sort == defx._sort_method else sort
 
 
 @action(name='yank_path')

@@ -41,8 +41,8 @@ class Column(Base):
                        'raw_mode', 'max_indicator_width']
 
         for opt in custom_opts:
-            if 'defx_git#' + opt in self.vim.vars:
-                self.vars[opt] = self.vim.vars['defx_git#' + opt]
+            if f'defx_git#{opt}' in self.vim.vars:
+                self.vars[opt] = self.vim.vars[f'defx_git#{opt}']
 
         self.cache: typing.List[str] = []
         self.git_root = ''
@@ -104,10 +104,7 @@ class Column(Base):
 
         entry = self.find_in_cache(candidate)
 
-        if not entry:
-            return default
-
-        return self.get_indicator(entry)
+        return self.get_indicator(entry) if entry else default
 
     def get_indicator(self, entry: str) -> str:
         if self.vars['raw_mode']:
@@ -122,8 +119,7 @@ class Column(Base):
         return self.column_length
 
     def syntaxes(self) -> typing.List[str]:
-        return [
-            self.syntax_name + '_' + name for name in self.vars['indicators']]
+        return [f'{self.syntax_name}_{name}' for name in self.vars['indicators']]
 
     def highlight_commands(self) -> typing.List[str]:
         commands: typing.List[str] = []
@@ -144,8 +140,10 @@ class Column(Base):
 
     def find_in_cache(self, candidate: dict) -> str:
         action_path = PurePath(candidate['action__path']).as_posix()
-        path = str(action_path).replace(f'{self.git_root}/', '')
-        path += '/' if candidate['is_directory'] else ''
+        path = str(action_path).replace(f'{self.git_root}/', '') + (
+            '/' if candidate['is_directory'] else ''
+        )
+
         for item in self.cache:
             item_path = item[3:]
             if item[0] == 'R':
@@ -159,7 +157,7 @@ class Column(Base):
     def cache_status(self, path: str) -> None:
         self.cache = []
 
-        if not self.git_root or not str(path).startswith(self.git_root):
+        if not self.git_root or not path.startswith(self.git_root):
             self.git_root = PurePath(self.run_cmd(
                 ['git', 'rev-parse', '--show-toplevel'], path
             )).as_posix()
@@ -179,7 +177,7 @@ class Column(Base):
         if a[0] == 'U' or a[1] == 'U':
             return -1
 
-        if (a[0] == 'M' or a[1] == 'M') and not (b[0] == 'U' or b[1] == 'U'):
+        if ((a[0] == 'M' or a[1] == 'M')) and b[0] != 'U' and b[1] != 'U':
             return -1
 
         if ((a[0] == '?' and a[1] == '?') and not
@@ -196,7 +194,7 @@ class Column(Base):
             return 'Untracked'
         elif us == ' ' and them == 'M':
             return 'Modified'
-        elif us in ['M', 'A', 'C']:
+        elif us in {'M', 'A', 'C'}:
             return 'Staged'
         elif us == 'R':
             return 'Renamed'
@@ -219,7 +217,4 @@ class Column(Base):
 
         decoded = p.stdout.decode('utf-8')
 
-        if not decoded:
-            return ''
-
-        return decoded.strip('\n')
+        return decoded.strip('\n') if decoded else ''

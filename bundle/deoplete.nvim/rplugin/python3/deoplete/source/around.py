@@ -23,10 +23,9 @@ class Source(Base):
             'range_above': 20,
             'range_below': 20,
         }
-        custom_vars = self.vim.call(
+        if custom_vars := self.vim.call(
             'deoplete#custom#_get_source_vars', self.name
-        )
-        if custom_vars:
+        ):
             self.vars.update(custom_vars)
 
     def gather_candidates(self, context: UserContext) -> Candidates:
@@ -48,14 +47,15 @@ class Source(Base):
 
         # grab ':changes' command output
         p = re.compile(r'[\s\d]+')
-        lines = set()
-        for change_line in [
-            x[p.search(x).span()[1]:]  # type: ignore
-            for x in self.vim.call('execute', 'changes').split('\n')[2:]
-            if p.search(x)
-        ]:
-            if change_line and change_line != '-invalid-':
-                lines.add(change_line)
+        lines = {
+            change_line
+            for change_line in [
+                x[p.search(x).span()[1] :]  # type: ignore
+                for x in self.vim.call('execute', 'changes').split('\n')[2:]
+                if p.search(x)
+            ]
+            if change_line and change_line != '-invalid-'
+        }
 
         words = parse_buffer_pattern(lines, context['keyword_pattern'])
         candidates += [

@@ -59,13 +59,10 @@ class Column(Base):
         return typing.cast(int, self.vars['length'])
 
     def syntaxes(self) -> typing.List[str]:
-        return [self.syntax_name + '_' + x for x in self._syntaxes]
+        return [f'{self.syntax_name}_{x}' for x in self._syntaxes]
 
     def highlight_commands(self) -> typing.List[str]:
-        commands: typing.List[str] = []
-        for icon, highlight in self._highlights.items():
-            commands.append(
-                'highlight default link {}_{}_icon {}'.format(
-                    self.highlight_name, icon, highlight))
-
-        return commands
+        return [
+            f'highlight default link {self.highlight_name}_{icon}_icon {highlight}'
+            for icon, highlight in self._highlights.items()
+        ]

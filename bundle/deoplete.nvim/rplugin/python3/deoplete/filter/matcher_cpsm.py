@@ -29,9 +29,8 @@ class Filter(Base):
             return context['candidates']  # type: ignore
 
         if self._cpsm is None:
-            errmsg = self._init_cpsm(context)
-            if errmsg:
-                error(self.vim, 'matcher_cpsm: %s' % errmsg)
+            if errmsg := self._init_cpsm(context):
+                error(self.vim, f'matcher_cpsm: {errmsg}')
                 return []
 
         complete_str = context['complete_str']
@@ -45,7 +44,7 @@ class Filter(Base):
 
     def _init_cpsm(self, context: UserContext) -> str:
         ext = '.pyd' if context['is_windows'] else '.so'
-        fname = 'bin/cpsm_py' + ext
+        fname = f'bin/cpsm_py{ext}'
         found = globruntime(self.vim.options['runtimepath'], fname)
         errmsg = ''
         if found:
