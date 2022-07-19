@@ -10,17 +10,15 @@ WINDOW_TYPE_ID = neovim_rpc_server_api_info.API_INFO['types']['Window']['id']
 
 
 def decode_if_bytes(obj):
-    if isinstance(obj, bytes):
-        return obj.decode("utf-8")
-    return obj
+    return obj.decode("utf-8") if isinstance(obj, bytes) else obj
 
 
 def walk(fn, obj):
     if type(obj) in [list, tuple, vim.List]:
-        return list(walk(fn, o) for o in obj)
+        return [walk(fn, o) for o in obj]
     if type(obj) in [dict, vim.Dictionary]:
-        return dict((walk(fn, k), walk(fn, v)) for k, v in
-                    obj.items())
+        return {walk(fn, k): walk(fn, v) for k, v in obj.items()}
+
     return fn(obj)
 
 

@@ -24,23 +24,15 @@ def main(argv):
     # Output any warnings (caught during `compile`).
     # This could/should maybe only handle SyntaxWarnings?
     for wm in wc:
-        print(
-            "%s:%s: W: %s (%s)"
-            % (wm.filename, wm.lineno, wm.message, wm.category.__name__)
-        )
+        print(f"{wm.filename}:{wm.lineno}: W: {wm.message} ({wm.category.__name__})")
         exitcode |= 2
 
     # Output any SyntaxError.
     if syntax_err:
         print(
-            "%s:%s:%s: E: %s"
-            % (
-                syntax_err.filename,
-                syntax_err.lineno,
-                syntax_err.offset,
-                syntax_err.msg,
-            )
+            f"{syntax_err.filename}:{syntax_err.lineno}:{syntax_err.offset}: E: {syntax_err.msg}"
         )
+
         exitcode |= 1
     return exitcode
 

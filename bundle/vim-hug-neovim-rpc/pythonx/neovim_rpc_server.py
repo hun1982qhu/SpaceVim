@@ -60,7 +60,7 @@ class VimHandler(socketserver.BaseRequestHandler):
     def notify(cls, cmd=None):
         try:
             if cmd is None:
-                cmd = vim_py + " neovim_rpc_server.process_pending_requests()"
+                cmd = f"{vim_py} neovim_rpc_server.process_pending_requests()"
             if not VimHandler._sock:
                 return
             with VimHandler._lock:
@@ -74,7 +74,7 @@ class VimHandler(socketserver.BaseRequestHandler):
     @classmethod
     def notify_exited(cls, channel):
         try:
-            cls.notify("call neovim_rpc#_on_exit(%s)" % channel)
+            cls.notify(f"call neovim_rpc#_on_exit({channel})")
         except Exception as ex:
             logger.exception(
                 'notify_exited for channel [%s] exception: %s', channel, ex)
@@ -141,8 +141,7 @@ class SocketToStream():
         self._sock = sock
 
     def read(self, cnt):
-        if cnt > 4096:
-            cnt = 4096
+        cnt = min(cnt, 4096)
         return self._sock.recv(cnt)
 
     def write(self, w):
@@ -259,8 +258,7 @@ class NvimHandler(socketserver.BaseRequestHandler):
     def shutdown(cls):
         # close all sockets
         for channel in list(cls.channel_sockets.keys()):
-            chinfo = cls.channel_sockets.get(channel, None)
-            if chinfo:
+            if chinfo := cls.channel_sockets.get(channel, None):
                 sock = chinfo['sock']
                 logger.info("closing client %s", channel)
                 # if don't shutdown the socket, vim will never exit because the
@@ -272,24 +270,25 @@ class NvimHandler(socketserver.BaseRequestHandler):
 # copied from neovim python-client/neovim/__init__.py
 def _setup_logging(name):
     """Setup logging according to environment variables."""
+    if 'NVIM_PYTHON_LOG_FILE' not in os.environ:
+        return
     logger = logging.getLogger(__name__)
-    if 'NVIM_PYTHON_LOG_FILE' in os.environ:
-        prefix = os.environ['NVIM_PYTHON_LOG_FILE'].strip()
-        major_version = sys.version_info[0]
-        logfile = '{}_py{}_{}'.format(prefix, major_version, name)
-        handler = logging.FileHandler(logfile, 'w', encoding='utf-8')
-        handler.formatter = logging.Formatter(
-            '%(asctime)s [%(levelname)s @ '
-            '%(filename)s:%(funcName)s:%(lineno)s] %(process)s - %(message)s')
-        logging.root.addHandler(handler)
-        level = logging.INFO
-        if 'NVIM_PYTHON_LOG_LEVEL' in os.environ:
-            lv = getattr(logging,
-                         os.environ['NVIM_PYTHON_LOG_LEVEL'].strip(),
-                         level)
-            if isinstance(lv, int):
-                level = lv
-        logger.setLevel(level)
+    prefix = os.environ['NVIM_PYTHON_LOG_FILE'].strip()
+    major_version = sys.version_info[0]
+    logfile = f'{prefix}_py{major_version}_{name}'
+    handler = logging.FileHandler(logfile, 'w', encoding='utf-8')
+    handler.formatter = logging.Formatter(
+        '%(asctime)s [%(levelname)s @ '
+        '%(filename)s:%(funcName)s:%(lineno)s] %(process)s - %(message)s')
+    logging.root.addHandler(handler)
+    level = logging.INFO
+    if 'NVIM_PYTHON_LOG_LEVEL' in os.environ:
+        lv = getattr(logging,
+                     os.environ['NVIM_PYTHON_LOG_LEVEL'].strip(),
+                     level)
+        if isinstance(lv, int):
+            level = lv
+    logger.setLevel(level)
 
 
 class ThreadedTCPServer(socketserver.ThreadingMixIn, socketserver.TCPServer):
@@ -438,7 +437,7 @@ def _process_request(channel, method, args):
             "rpc method [%s] not implemented in "
             "pythonx/neovim_rpc_methods.py. "
             "Please send PR or contact the mantainer." % method)
-        raise Exception('%s not implemented' % method)
+        raise Exception(f'{method} not implemented')
 
 
 def rpcnotify(channel, method, args):

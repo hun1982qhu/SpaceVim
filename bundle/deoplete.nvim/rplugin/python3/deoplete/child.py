@@ -69,8 +69,7 @@ class Child(logger.LoggingMixin):
                 args = child_in['args']
                 queue_id = child_in['queue_id']
 
-                ret = self.main(name, args, queue_id)
-                if ret:
+                if ret := self.main(name, args, queue_id):
                     self._write(stdout, ret)
                     self._vim.call('deoplete#auto_complete', 'Update')
 
@@ -115,12 +114,12 @@ class Child(logger.LoggingMixin):
             source.path = path
             if source.name in self._loaded_sources:
                 # Duplicated name
-                error_tb(self._vim, 'Duplicated source: %s' % source.name)
+                error_tb(self._vim, f'Duplicated source: {source.name}')
                 error_tb(self._vim, 'path: "%s" "%s"' %
                          (path, self._loaded_sources[source.name]))
                 source = None
         except Exception:
-            error_tb(self._vim, 'Could not load source: %s' % path)
+            error_tb(self._vim, f'Could not load source: {path}')
         finally:
             if source:
                 self._loaded_sources[source.name] = path
@@ -141,13 +140,13 @@ class Child(logger.LoggingMixin):
             f.path = path
             if f.name in self._loaded_filters:
                 # Duplicated name
-                error_tb(self._vim, 'Duplicated filter: %s' % f.name)
+                error_tb(self._vim, f'Duplicated filter: {f.name}')
                 error_tb(self._vim, 'path: "%s" "%s"' %
                          (path, self._loaded_filters[f.name]))
                 f = None
         except Exception:
             # Exception occurred when loading a filter.  Log stack trace.
-            error_tb(self._vim, 'Could not load filter: %s' % path)
+            error_tb(self._vim, f'Could not load filter: {path}')
         finally:
             if f:
                 self._loaded_filters[f.name] = path
@@ -163,9 +162,9 @@ class Child(logger.LoggingMixin):
         merged_results = []
         for result in [x for x in results
                        if not self._is_skip(x['context'], x['source'])]:
-            candidates = self._get_candidates(
-                result, context['input'], context['next_input'])
-            if candidates:
+            if candidates := self._get_candidates(
+                result, context['input'], context['next_input']
+            ):
                 rank = get_custom(context['custom'],
                                   result['source'].name, 'rank',
                                   result['source'].rank)
@@ -327,7 +326,7 @@ class Child(logger.LoggingMixin):
             context['candidates'] = filtered
             self._profile_end(f.name)
         except Exception:
-            error_tb(self._vim, 'Errors from: %s' % f)
+            error_tb(self._vim, f'Errors from: {f}')
 
     def _get_candidates(self, result: Result,
                         context_input: str, next_input: str
@@ -349,13 +348,8 @@ class Child(logger.LoggingMixin):
         ctx['complete_str'] = context_input[ctx['char_position']:]
         ctx['is_sorted'] = False
 
-        # Set ignorecase
-        case = ctx['smartcase'] or ctx['camelcase']
-        if case:
-            if re.search(r'[A-Z]', ctx['complete_str']):
-                ctx['ignorecase'] = False
-            else:
-                ctx['ignorecase'] = True
+        if case := ctx['smartcase'] or ctx['camelcase']:
+            ctx['ignorecase'] = not re.search(r'[A-Z]', ctx['complete_str'])
         ignorecase = ctx['ignorecase']
 
         # Match
@@ -403,18 +397,15 @@ class Child(logger.LoggingMixin):
         if hasattr(source, 'on_post_filter'):
             ctx['candidates'] = source.on_post_filter(ctx)
 
-        mark = source.mark + ' '
+        mark = f'{source.mark} '
 
-        refresh = False
         refresh_always = self._vim.call(
             'deoplete#custom#_get_option', 'refresh_always')
         auto_complete = self._vim.call(
             'deoplete#custom#_get_option', 'auto_complete')
         eskk_check = self._vim.call(
             'deoplete#util#check_eskk_phase_henkan')
-        if refresh_always and auto_complete and not eskk_check:
-            refresh = True
-
+        refresh = bool(refresh_always and auto_complete and not eskk_check)
         for candidate in ctx['candidates']:
             candidate['icase'] = 1
             candidate['equal'] = refresh
@@ -447,11 +438,12 @@ class Child(logger.LoggingMixin):
                 continue
             if context['sources'] and source_name not in context['sources']:
                 continue
-            if source.filetypes and not any(x in filetypes
-                                            for x in source.filetypes):
+            if source.filetypes and all(
+                x not in filetypes for x in source.filetypes
+            ):
                 continue
             if not source.is_initialized and hasattr(source, 'on_init'):
-                self.debug('on_init Source: ' + source.name)  # type: ignore
+                self.debug(f'on_init Source: {source.name}')
                 try:
                     context['vars'] = self._vim.vars
                     source.on_init(context)
@@ -478,7 +470,7 @@ class Child(logger.LoggingMixin):
                 'deoplete#custom#_get_option', 'profile')
             if self._profile_flag:
                 return self._profile_start(context, name)
-        elif self._profile_flag:
+        else:
             self.debug(f'Profile Start: {name}')
             self._profile_start_time = time.monotonic()
 
@@ -520,8 +512,9 @@ class Child(logger.LoggingMixin):
 
         for ft in context['filetypes']:
             input_pattern = source.get_input_pattern(ft)
-            if (input_pattern != '' and
-                    re.search('(' + input_pattern + ')$', context['input'])):
+            if input_pattern != '' and re.search(
+                f'({input_pattern})$', context['input']
+            ):
                 return False
         auto_complete_popup = self._vim.call(
             'deoplete#custom#_get_option', 'auto_complete_popup')

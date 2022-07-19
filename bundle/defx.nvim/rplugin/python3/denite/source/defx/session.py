@@ -27,16 +27,17 @@ class Source(Base):
         if not sessions:
             return []
 
-        max_name = max([self.vim.call('strwidth', x['name'])
-                        for x in sessions])
+        max_name = max(self.vim.call('strwidth', x['name']) for x in sessions)
         word_format = '{0:<' + str(max_name) + '} - {1}'
-        return [{
-            'word': word_format.format(x['name'], x['path']),
-            'action__command': "call defx#call_action('cd', '{}')".format(
-                x['path']),
-            'action__path': x['path'],
-            'source__winid': self._winid,
-        } for x in sessions]
+        return [
+            {
+                'word': word_format.format(x['name'], x['path']),
+                'action__command': f"call defx#call_action('cd', '{x['path']}')",
+                'action__path': x['path'],
+                'source__winid': self._winid,
+            }
+            for x in sessions
+        ]
 
 
 class Kind(Command):

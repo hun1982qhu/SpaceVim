@@ -64,8 +64,7 @@ class Column(Base):
         return (self._truncate(text), highlights)
 
     def length(self, context: Context) -> int:
-        max_fnamewidth = max([strwidth(self.vim, x['word'])
-                              for x in context.targets])
+        max_fnamewidth = max(strwidth(self.vim, x['word']) for x in context.targets)
         max_fnamewidth += context.variable_length
         max_fnamewidth += len(self._file_marker)
         max_width = int(self.vars['max_width'])
@@ -77,23 +76,14 @@ class Column(Base):
         return self._current_length
 
     def syntaxes(self) -> typing.List[str]:
-        return [self.syntax_name + '_' + x for x in self._syntaxes]
+        return [f'{self.syntax_name}_{x}' for x in self._syntaxes]
 
     def highlight_commands(self) -> typing.List[str]:
-        commands: typing.List[str] = []
-
-        commands.append(
-            'highlight default link {}_{} {}'.format(
-                self.highlight_name, 'directory', 'PreProc'))
-        commands.append(
-            'highlight default link {}_{} {}'.format(
-                self.highlight_name, 'root_marker',
-                self.vars['root_marker_highlight']))
-        commands.append(
-            'highlight default link {}_{} {}'.format(
-                self.highlight_name, 'root', 'Identifier'))
-
-        return commands
+        return [
+            f'highlight default link {self.highlight_name}_directory PreProc',
+            f"highlight default link {self.highlight_name}_root_marker {self.vars['root_marker_highlight']}",
+            f'highlight default link {self.highlight_name}_root Identifier',
+        ]
 
     def _truncate(self, word: str) -> str:
         width = strwidth(self.vim, word)

@@ -37,11 +37,11 @@ def _check_sanity():
     # Check that the target buffer exists, is loaded and is present in the tab
     b = int(vim.eval('g:mundo_target_n'))
 
-    if not vim.eval('bufloaded(%d)' % int(b)):
+    if not vim.eval('bufloaded(%d)' % b):
         vim.command('echo "%s"' % (MISSING_BUFFER % b))
         return False
 
-    w = int(vim.eval('bufwinnr(%d)' % int(b)))
+    w = int(vim.eval('bufwinnr(%d)' % b))
 
     if w == -1:
         vim.command('echo "%s"' % (MISSING_WINDOW % (w, b)))
@@ -50,10 +50,7 @@ def _check_sanity():
     # Check if we are in terminal mode.
     mode = vim.eval('mode()')
 
-    if mode == 't':
-        return False
-
-    return True
+    return mode != 't'
 
 
 INLINE_HELP = '''\
@@ -78,7 +75,7 @@ nodesData = Nodes()
 
 # from profilehooks import profile
 # @profile(immediate=True)
-def MundoRenderGraph(force=False):# {{{
+def MundoRenderGraph(force=False):    # {{{
     """ Renders the undo graph if necessary, updating it to reflect changes in
         the target buffer's undo tree.
 
@@ -127,8 +124,8 @@ def MundoRenderGraph(force=False):# {{{
             show_inline_undo,
             nodesData
     )
-    vim.command("let g:mundo_last_visible_line=%s"%last_visible_line)
-    vim.command("let g:mundo_first_visible_line=%s"%first_visible_line)
+    vim.command(f"let g:mundo_last_visible_line={last_visible_line}")
+    vim.command(f"let g:mundo_first_visible_line={first_visible_line}")
 
     output = []
     # right align the dag and flip over the y axis:
@@ -190,17 +187,16 @@ def MundoRenderPreview():# {{{
     vim.command('call mundo#MundoPreviewOutdated(0)')
 # }}}
 
-def MundoGetTargetState():# {{{
+def MundoGetTargetState():    # {{{
     """ Get the current undo number that mundo is at. """
     util._goto_window_for_buffer('__Mundo__')
     target_line = vim.eval("getline('.')")
-    matches = re.match('^[^\[]* \[([0-9]+)\] .*$', target_line)
-    if matches:
-        return int(matches.group(1))
+    if matches := re.match('^[^\[]* \[([0-9]+)\] .*$', target_line):
+        return int(matches[1])
     return 0
 # }}}
 
-def GetNextLine(direction,move_count,write,start="line('.')"):# {{{
+def GetNextLine(direction,move_count,write,start="line('.')"):    # {{{
     """ Recursively finds the line number resulting from undo graph traversal
         according to the given parameters.
     """
@@ -212,16 +208,16 @@ def GetNextLine(direction,move_count,write,start="line('.')"):# {{{
 
         # If we're in between two nodes we move by one less to get back on track.
         if start_line.find('[') == -1:
-            distance = distance - 1
+            distance -= 1
     else:
-      distance = 1
-      nextline = vim.eval("getline(%d)" % (start_line_no+direction))
-      idx1 = nextline.find('@')
-      idx2 = nextline.find('o')
-      idx3 = nextline.find('w')
-      # if the next line is not a revision - then go down one more.
-      if (idx1+idx2+idx3) == -3:
-          distance = distance + 1
+        distance = 1
+        nextline = vim.eval("getline(%d)" % (start_line_no+direction))
+        idx1 = nextline.find('@')
+        idx2 = nextline.find('o')
+        idx3 = nextline.find('w')
+              # if the next line is not a revision - then go down one more.
+        if (idx1+idx2+idx3) == -3:
+            distance += 1
 
     next_line = start_line_no + distance*direction
     if move_count > 1:
@@ -238,7 +234,7 @@ def GetNextLine(direction,move_count,write,start="line('.')"):# {{{
     return next_line
 # }}}
 
-def MundoMove(direction,move_count=1,relative=True,write=False):# {{{
+def MundoMove(direction,move_count=1,relative=True,write=False):    # {{{
     """
     Move within the undo graph in the direction specified (or to the specific
     undo node specified).
@@ -256,9 +252,7 @@ def MundoMove(direction,move_count=1,relative=True,write=False):# {{{
     if relative:
         target_n = GetNextLine(direction,move_count,write)
     else:
-        updown = 1
-        if MundoGetTargetState() < direction:
-            updown = -1
+        updown = -1 if MundoGetTargetState() < direction else 1
         target_n = GetNextLine(updown,abs(MundoGetTargetState()-direction),write)
 
     # Bound the movement to the graph.
@@ -285,10 +279,7 @@ def MundoMove(direction,move_count=1,relative=True,write=False):# {{{
         idxs.append(idx2)
     if idx3 != -1:
         idxs.append(idx3)
-    if len(idxs)==0:
-        minidx=0
-    else:
-        minidx=min(idxs)
+    minidx = min(idxs, default=0)
     if idx1 == minidx:
         vim.command("call cursor(0, %d + 1)" % idx1)
     elif idx2 == minidx:
@@ -362,33 +353,33 @@ def MundoMatch(down):# {{{
         MundoMove(found_version,1,False)
 # }}}
 
-def MundoRenderPatchdiff():# {{{
+def MundoRenderPatchdiff():    # {{{
     """ Call MundoRenderChangePreview and display a vert diffpatch with the
     current file. """
-    if MundoRenderChangePreview():
-        # if there are no lines, do nothing (show a warning).
-        util._goto_window_for_buffer('__Mundo_Preview__')
-        if vim.current.buffer[:] == ['']:
-            # restore the cursor position before exiting.
-            util._goto_window_for_buffer('__Mundo__')
-            vim.command('unsilent echo "No difference between current file and undo number!"')
-            return False
-
-        # quit out of mundo main screen
+    if not MundoRenderChangePreview():
+        return False
+    # if there are no lines, do nothing (show a warning).
+    util._goto_window_for_buffer('__Mundo_Preview__')
+    if vim.current.buffer[:] == ['']:
+        # restore the cursor position before exiting.
         util._goto_window_for_buffer('__Mundo__')
-        vim.command('quit')
+        vim.command('unsilent echo "No difference between current file and undo number!"')
+        return False
 
-        # save the __Mundo_Preview__ buffer to a temp file.
-        util._goto_window_for_buffer('__Mundo_Preview__')
-        (handle,filename) = tempfile.mkstemp()
-        vim.command('silent! w %s' % (filename))
-        # exit the __Mundo_Preview__ window
-        vim.command('bdelete')
+    # quit out of mundo main screen
+    util._goto_window_for_buffer('__Mundo__')
+    vim.command('quit')
+
+    # save the __Mundo_Preview__ buffer to a temp file.
+    util._goto_window_for_buffer('__Mundo_Preview__')
+    (handle,filename) = tempfile.mkstemp()
+    vim.command(f'silent! w {filename}')
+    # exit the __Mundo_Preview__ window
+    vim.command('bdelete')
         # diff the temp file
-        vim.command('silent! keepalt vert diffpatch %s' % (filename))
-        vim.command('set buftype=nofile bufhidden=delete')
-        return True
-    return False
+    vim.command(f'silent! keepalt vert diffpatch {filename}')
+    vim.command('set buftype=nofile bufhidden=delete')
+    return True
 # }}}
 
 def MundoGetChangesForLine():# {{{
@@ -399,7 +390,7 @@ def MundoGetChangesForLine():# {{{
 
     # Check that there's an undo state. There may not be if we're talking about
     # a buffer with no changes yet.
-    if target_state == None:
+    if target_state is None:
         util._goto_window_for_buffer('__Mundo__')
         return False
     else:
@@ -485,7 +476,7 @@ def MundoRevert():# {{{
         vim.command('MundoToggle')
 # }}}
 
-def MundoPlayTo():# {{{
+def MundoPlayTo():    # {{{
     """ Replays changes between the current state and a selected state in
         real-time.
     """
@@ -507,11 +498,7 @@ def MundoPlayTo():# {{{
         rev = origin.n < dest.n
         nodes = []
 
-        if origin.n > dest.n:
-            current, final = origin, dest
-        else:
-            current, final = dest, origin
-
+        current, final = (origin, dest) if origin.n > dest.n else (dest, origin)
         while current.n > final.n:
             nodes.append(current)
             current = current.parent
@@ -521,10 +508,8 @@ def MundoPlayTo():# {{{
 
         nodes.append(current)
 
-        if rev:
-            return reversed(nodes)
-        else:
-            return nodes
+        return reversed(nodes) if rev else nodes
+
     # }}}
 
     branch = _walk_branch(start, end)

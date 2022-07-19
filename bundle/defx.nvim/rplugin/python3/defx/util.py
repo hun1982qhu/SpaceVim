@@ -61,13 +61,12 @@ def import_plugin(path: Path, source: str,
 
     If the class exists, add its directory to sys.path.
     """
-    module_name = 'defx.%s.%s' % (source, path.stem)
+    module_name = f'defx.{source}.{path.stem}'
 
     spec = importlib.util.spec_from_file_location(module_name, str(path))
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)  # type: ignore
-    cls = getattr(module, classname, None)
-    return cls
+    return getattr(module, classname, None)
 
 
 def readable(path: Path) -> bool:
@@ -75,10 +74,7 @@ def readable(path: Path) -> bool:
     Check {path} is readable.
     """
     try:
-        if os.access(str(path), os.R_OK) and path.stat():
-            return True
-        else:
-            return False
+        return bool(os.access(str(path), os.R_OK) and path.stat())
     except Exception:
         return False
 
@@ -103,16 +99,22 @@ def get_python_exe() -> str:
         if which is not None:
             return which
 
-    for name in (Path(base_exec_prefix).joinpath(v) for v in [
-            'python3', 'python',
-            str(Path('bin').joinpath('python3')),
-            str(Path('bin').joinpath('python')),
-    ]):
-        if name.exists():
-            return str(name)
-
-    # return sys.executable anyway. This may not work on windows
-    return executable
+    return next(
+        (
+            str(name)
+            for name in (
+                Path(base_exec_prefix).joinpath(v)
+                for v in [
+                    'python3',
+                    'python',
+                    str(Path('bin').joinpath('python3')),
+                    str(Path('bin').joinpath('python')),
+                ]
+            )
+            if name.exists()
+        ),
+        executable,
+    )
 
 
 def strwidth(vim: Nvim, word: str) -> int:

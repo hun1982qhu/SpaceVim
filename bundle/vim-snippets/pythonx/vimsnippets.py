@@ -11,7 +11,7 @@ def complete(tab, opts):
 
     :return: a string that match with tab
     """
-    el = [x for x in tab]
+    el = list(tab)
     pat = "".join(list(map(lambda x: x + "\w*" if re.match("\w", x) else x,
                            el)))
     try:
@@ -36,24 +36,19 @@ def _parse_comments(s):
 
             if len(flags) == 0:
                 rv.append(('OTHER', text, text, text, ""))
-            # parse 3-part comment, but ignore those with O flag
             elif 's' in flags and 'O' not in flags:
-                ctriple = ["TRIPLE"]
                 indent = ""
 
                 if flags[-1] in string.digits:
                     indent = " " * int(flags[-1])
-                ctriple.append(text)
-
+                ctriple = ["TRIPLE", text]
                 flags, text = next(i).split(':', 1)
                 assert flags[0] == 'm'
                 ctriple.append(text)
 
                 flags, text = next(i).split(':', 1)
                 assert flags[0] == 'e'
-                ctriple.append(text)
-                ctriple.append(indent)
-
+                ctriple.extend((text, indent))
                 rv.append(ctriple)
             elif 'b' in flags:
                 if len(text) == 1:
@@ -103,10 +98,7 @@ def display_width(str):
     except AttributeError:
         # Fallback
         from unicodedata import east_asian_width
-        result = 0
-        for c in str:
-            result += 2 if east_asian_width(c) in ('W', 'F') else 1
-        return result
+        return sum(2 if east_asian_width(c) in ('W', 'F') else 1 for c in str)
 
 # http://stackoverflow.com/questions/2718196/find-all-chinese-text-in-a-string-using-python-and-regex
 def has_cjk(s):

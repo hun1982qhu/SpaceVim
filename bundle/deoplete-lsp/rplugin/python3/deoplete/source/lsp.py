@@ -120,9 +120,7 @@ class Source(Base):
             return
         elif isinstance(results, dict):
             if 'items' not in results:
-                self.print_error(
-                    'LSP results does not have "items" key:{}'.format(
-                        str(results)))
+                self.print_error(f'LSP results does not have "items" key:{str(results)}')
                 return
             items = results['items']
         else:

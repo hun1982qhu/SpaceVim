@@ -24,12 +24,12 @@ def test_formatters():
     run formatters on entire buffer
     '''
     for filename in listdir('before'):
-        output_file = '/tmp/neoformat_' + filename
+        output_file = f'/tmp/neoformat_{filename}'
         formatter = filename.split('.')[0]
         cmd = f'nvim -u vimrc -c "set verbose=1 | Neoformat {formatter} | w! {output_file} | q! " --headless ./before/{filename}'
         run_cmd(cmd)
         before = readlines(output_file)
-        after = readlines('./after/' + filename)
+        after = readlines(f'./after/{filename}')
         assert before == after
 
 
@@ -38,7 +38,7 @@ def test_visual_selection_multi_filetype():
     Format different filetypes in one file
     '''
     filename_before = 'visual_selection_before.txt'
-    output_file = '/tmp/neoformat_' + filename_before
+    output_file = f'/tmp/neoformat_{filename_before}'
     copyfile(filename_before, output_file)
 
     for test in [('python', 4, 7), ('css', 9, 9), ('css', 14, 15)]:
@@ -61,7 +61,7 @@ def test_visual_selection_with_filetype_and_formatter():
     dir_after = 'visual_after/'
     for filename in listdir(dir_before):
         (filetype, formatter, start_line, end_line) = filename.split('_')
-        output_file = '/tmp/neoformat_' + filename
+        output_file = f'/tmp/neoformat_{filename}'
         cmd = f'nvim -u vimrc -c "set verbose=1 | {start_line},{end_line}Neoformat! {filetype} {formatter} | w! {output_file} | q! " --headless {dir_before + filename}'
         run_cmd(cmd)
         before = readlines(output_file)
@@ -76,7 +76,7 @@ def test_formatprg_with_neoformat():
 
     dir_before = 'before/'
     filename = 'cssbeautify.css'
-    output_file = '/tmp/neoformat_fmt_prg_' + filename
+    output_file = f'/tmp/neoformat_fmt_prg_{filename}'
     viml = '''
     let &formatprg = 'css-beautify -s 6 -n'
     let g:neoformat_try_formatprg = 1
@@ -95,7 +95,7 @@ def test_formatprg_without_enable():
 
     dir_before = 'before/'
     filename = 'cssbeautify.css'
-    output_file = '/tmp/neoformat_fmtprg_not_enabled' + filename
+    output_file = f'/tmp/neoformat_fmtprg_not_enabled{filename}'
     viml = '''
     let &formatprg = 'css-beautify -s 6 -n'
     '''
@@ -110,7 +110,7 @@ def test_vader():
     '''
     run *.vader tests
     '''
-    cmd = f'nvim -u vimrc -c "Vader! *.vader" --headless'
+    cmd = 'nvim -u vimrc -c "Vader! *.vader" --headless'
     exit_code = run_cmd(cmd)
     assert exit_code == 0
 
@@ -119,7 +119,7 @@ def test_autocompletion():
     '''
     run the vim autocompletion tests
     '''
-    cmd = f'nvim -u vimrc -c "source autocomplete_test.vim" --headless'
+    cmd = 'nvim -u vimrc -c "source autocomplete_test.vim" --headless'
     exit_code = run_cmd(cmd)
     assert exit_code == 0
 

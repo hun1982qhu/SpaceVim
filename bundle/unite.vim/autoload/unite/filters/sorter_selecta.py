@@ -31,9 +31,8 @@ BOUNDARY_CHARS = string.punctuation + string.whitespace
 
 
 def score():
-    score = get_score(vim.eval('candidate.word'), vim.eval('input'))
-    if score:
-        vim.command('let candidate.filter__rank += %s' % score)
+    if score := get_score(vim.eval('candidate.word'), vim.eval('input')):
+        vim.command(f'let candidate.filter__rank += {score}')
 
 
 def get_score(string, query_chars):

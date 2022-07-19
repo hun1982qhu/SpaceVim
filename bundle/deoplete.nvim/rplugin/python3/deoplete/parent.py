@@ -72,9 +72,11 @@ class SyncParent(_Parent):
     def merge_results(self,
                       context: UserContext) -> typing.Tuple[typing.Any]:
         results = self._child._merge_results(context, queue_id=None)
-        ret = (results['is_async'], results['is_async'],
-               results['merged_results']) if results else (False, [])
-        return ret  # type: ignore
+        return (
+            (results['is_async'], results['is_async'], results['merged_results'])
+            if results
+            else (False, [])
+        )
 
     def _put(self, name: str,
              args: typing.List[typing.Any]) -> typing.Optional[str]:
@@ -97,11 +99,11 @@ class AsyncParent(_Parent):
                 checks = (r'Scripts\python.exe', 'python.exe')
             else:
                 checks = (
-                    'bin/python%s.%s' % (
-                        sys.version_info[0], sys.version[1]),
-                    'bin/python%s' % (sys.version_info[0]),
+                    f'bin/python{sys.version_info[0]}.{sys.version[1]}',
+                    f'bin/python{sys.version_info[0]}',
                     'bin/python',
                 )
+
             for check in checks:
                 guess = os.path.join(sys.exec_prefix, check)
                 if os.path.isfile(str(guess)):
@@ -158,8 +160,11 @@ class AsyncParent(_Parent):
                       context: UserContext) -> typing.Tuple[typing.Any, ...]:
         # Note: TextChangedP is triggered when Update
         event = context['event']
-        if ((event == 'Update' or event == 'TextChangedP') and
-                context['position'] == self._prev_pos and self._queue_id):
+        if (
+            event in ['Update', 'TextChangedP']
+            and context['position'] == self._prev_pos
+            and self._queue_id
+        ):
             # Use previous id
             queue_id = self._queue_id
         else:

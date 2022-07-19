@@ -74,7 +74,7 @@ def test():
     source = usnip_query()
     for item in source:
         key = item[0]
-        if key == 'def' or 0:
+        if key == 'def':
             value = item[3]
             print(key, value)
             print('---')

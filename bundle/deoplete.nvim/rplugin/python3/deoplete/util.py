@@ -51,7 +51,7 @@ def convert2candidates(li: typing.Any) -> Candidates:
 def globruntime(runtimepath: str, path: str) -> typing.List[str]:
     ret: typing.List[str] = []
     for rtp in runtimepath.split(','):
-        ret += glob.glob(rtp + '/' + path)
+        ret += glob.glob(f'{rtp}/{path}')
     return ret
 
 
@@ -62,7 +62,7 @@ def import_plugin(path: str, source: str,
     If the class exists, add its directory to sys.path.
     """
     name = os.path.splitext(os.path.basename(path))[0]
-    module_name = 'deoplete.%s.%s' % (source, name)
+    module_name = f'deoplete.{source}.{name}'
 
     spec = importlib.util.spec_from_file_location(module_name, path)
     module = importlib.util.module_from_spec(spec)
@@ -96,7 +96,7 @@ def error_tb(vim: Nvim, msg: str) -> None:
     t, v, tb = sys.exc_info()
     if t and v and tb:
         lines += traceback.format_exc().splitlines()
-    lines += ['%s.  Use :messages / see above for error details.' % msg]
+    lines += [f'{msg}.  Use :messages / see above for error details.']
     if hasattr(vim, 'err_write'):
         vim.err_write('[deoplete] %s\n' % '\n'.join(lines))
     else:
@@ -107,10 +107,10 @@ def error_tb(vim: Nvim, msg: str) -> None:
 def error_vim(vim: Nvim, msg: str) -> None:
     throwpoint = vim.eval('v:throwpoint')
     if throwpoint != '':
-        error(vim, 'v:throwpoint = ' + throwpoint)
+        error(vim, f'v:throwpoint = {throwpoint}')
     exception = vim.eval('v:exception')
     if exception != '':
-        error(vim, 'v:exception = ' + exception)
+        error(vim, f'v:exception = {exception}')
     error_tb(vim, msg)
 
 
@@ -207,15 +207,12 @@ def truncate(string: str, max_width: int) -> str:
 
 
 def strwidth(string: str) -> int:
-    width = 0
-    for c in string:
-        width += charwidth(c)
-    return width
+    return sum(charwidth(c) for c in string)
 
 
 def charwidth(c: str) -> int:
     wc = unicodedata.east_asian_width(c)
-    return 2 if wc == 'F' or wc == 'W' else 1
+    return 2 if wc in ['F', 'W'] else 1
 
 
 def expand(path: str) -> str:
@@ -249,7 +246,7 @@ def binary_search_begin(li: typing.List[Candidates], prefix: str) -> int:
         index = int((s + e) / 2)
         word = li[index]['word'].lower()  # type: ignore
         if word.startswith(prefix):
-            if (index - 1) < 0:
+            if index < 1:
                 return index
             prev_word = li[index-1]['word']  # type: ignore
             if not prev_word.lower().startswith(prefix):

@@ -28,4 +28,4 @@ class Column(Base):
         return str(self.vars['indent'] * candidate['level'])
 
     def length(self, context: Context) -> int:
-        return int(max([x['level'] for x in context.targets]))
+        return int(max(x['level'] for x in context.targets))

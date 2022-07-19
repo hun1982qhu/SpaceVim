@@ -26,7 +26,11 @@ def one_line_diff_str(before,after,mx=15,pre=2):
         if firstEl:
             firstEl = False
             # add in pre character context:
-            if not (v.startswith('+') or v.startswith('-')) and result == '':
+            if (
+                not v.startswith('+')
+                and not v.startswith('-')
+                and result == ''
+            ):
                 v = v[-pre:]
         # when we're going to be bigger than our max limit, lets ensure that the
         # trailing +/- appears in the text:
@@ -67,39 +71,39 @@ def one_line_diff(before, after):
     return result
 
 def one_line_diff_raw(before,after):
-  s = difflib.SequenceMatcher(None,before,after)
-  results = []
-  for tag, i1, i2, j1, j2 in s.get_opcodes():
-    #print ("%7s a[%d:%d] (%s) b[%d:%d] (%s)" % (tag, i1, i2, before[i1:i2], j1, j2, after[j1:j2]))
-    if tag == 'equal':
-      _append_result(results,{
-        'equal': after[j1:j2]
-      })
-    if tag == 'insert':
-      _append_result(results,{
-        'plus': after[j1:j2]
-      })
-    elif tag == 'delete':
-      _append_result(results,{
-        'minus': before[i1:i2]
-      })
-    elif tag == 'replace':
-      _append_result(results,{
-        'minus': before[j1:j2],
-        'plus': after[j1:j2]
-      })
-  final_results = []
-  # finally, create a human readable string of information.
-  for v in results:
-    if 'minus' in v and 'plus' in v and len(v['minus']) > 0 and len(v['plus']) > 0:
-      final_results.append("-%s-+%s+"% (v['minus'],v['plus']))
-    elif 'minus' in v and len(v['minus']) > 0:
-      final_results.append("-%s-"% (v['minus']))
-    elif 'plus' in v and len(v['plus']) > 0:
-      final_results.append("+%s+"% (v['plus']))
-    elif 'equal' in v:
-      final_results.append("%s"% (v['equal']))
-  return final_results
+    s = difflib.SequenceMatcher(None,before,after)
+    results = []
+    for tag, i1, i2, j1, j2 in s.get_opcodes():
+      #print ("%7s a[%d:%d] (%s) b[%d:%d] (%s)" % (tag, i1, i2, before[i1:i2], j1, j2, after[j1:j2]))
+      if tag == 'equal':
+        _append_result(results,{
+          'equal': after[j1:j2]
+        })
+      if tag == 'insert':
+        _append_result(results,{
+          'plus': after[j1:j2]
+        })
+      elif tag == 'delete':
+        _append_result(results,{
+          'minus': before[i1:i2]
+        })
+      elif tag == 'replace':
+        _append_result(results,{
+          'minus': before[j1:j2],
+          'plus': after[j1:j2]
+        })
+    final_results = []
+      # finally, create a human readable string of information.
+    for v in results:
+        if 'minus' in v and 'plus' in v and len(v['minus']) > 0 and len(v['plus']) > 0:
+            final_results.append(f"-{v['minus']}-+{v['plus']}+")
+        elif 'minus' in v and len(v['minus']) > 0:
+            final_results.append(f"-{v['minus']}-")
+        elif 'plus' in v and len(v['plus']) > 0:
+            final_results.append(f"+{v['plus']}+")
+        elif 'equal' in v:
+            final_results.append(f"{v['equal']}")
+    return final_results
 
 def _append_result(results,val):
   results.append(val)

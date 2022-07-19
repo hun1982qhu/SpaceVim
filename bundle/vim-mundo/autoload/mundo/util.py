@@ -1,7 +1,7 @@
 # import vim
 
-normal = lambda s: vim().command('normal %s' % s)
-normal_silent = lambda s: vim().command('silent! normal %s' % s)
+normal = lambda s: vim().command(f'normal {s}')
+normal_silent = lambda s: vim().command(f'silent! normal {s}')
 
 
 def vim():
@@ -30,7 +30,7 @@ def _goto_window_for_buffer(expr):
 
     winnr = int(vim().eval('bufwinnr({0})'.format(expr)))
     assert winnr != -1
-    vim().command('%dwincmd w' % int(winnr))
+    vim().command('%dwincmd w' % winnr)
 
 
 # Rendering utility functions
@@ -45,6 +45,6 @@ def _output_preview_text(lines):
 def _undo_to(n):
     n = int(n)
     if n == 0:
-        vim().command('silent earlier %s' % (int(vim().eval('&undolevels')) + 1))
+        vim().command(f"silent earlier {int(vim().eval('&undolevels')) + 1}")
     else:
-        vim().command('silent undo %d' % int(n))
+        vim().command('silent undo %d' % n)

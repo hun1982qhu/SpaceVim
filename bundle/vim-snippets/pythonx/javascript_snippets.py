@@ -9,40 +9,22 @@ NEVER = 'never'
 
 
 def get_option(snip, option, default=None):
-    return snip.opt('g:ultisnips_javascript["{}"]'.format(option), default)
+    return snip.opt(f'g:ultisnips_javascript["{option}"]', default)
 
 
 def semi(snip):
     option = get_option(snip, 'semi', ALWAYS)
 
-    if option == NEVER:
-        ret = ''
-    elif option == ALWAYS:
-        ret = ';'
-    else:
-        ret = ';'
-    return ret
+    return '' if option == NEVER else ';'
 
 
 def space_before_function_paren(snip):
     option = get_option(snip, 'space-before-function-paren', NEVER)
 
-    if option == NEVER:
-        ret = ''
-    elif option == ALWAYS:
-        ret = ' '
-    else:
-        ret = ''
-    return ret
+    return '' if option == NEVER or option != ALWAYS else ' '
 
 
 def keyword_spacing(snip):
     option = get_option(snip, 'keyword-spacing', ALWAYS)
 
-    if option == NEVER:
-        ret = ''
-    elif option == ALWAYS:
-        ret = ' '
-    else:
-        ret = ''
-    return ret
+    return '' if option == NEVER or option != ALWAYS else ' '

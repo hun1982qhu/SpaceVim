@@ -45,7 +45,4 @@ class Column(Base):
         return self._length
 
     def highlight_commands(self) -> typing.List[str]:
-        commands: typing.List[str] = []
-        commands.append(
-            f'highlight default link {self.highlight_name} Constant')
-        return commands
+        return [f'highlight default link {self.highlight_name} Constant']

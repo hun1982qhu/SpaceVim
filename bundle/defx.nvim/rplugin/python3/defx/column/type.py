@@ -44,8 +44,9 @@ class Column(Base):
         self._length: int = 0
 
     def on_init(self, view: View, context: Context) -> None:
-        self._length = max([self.vim.call('strwidth', x['icon'])
-                            for x in self.vars['types']])
+        self._length = max(
+            self.vim.call('strwidth', x['icon']) for x in self.vars['types']
+        )
 
     def get_with_highlights(
         self, context: Context, candidate: Candidate
@@ -65,13 +66,10 @@ class Column(Base):
         return self._length
 
     def syntaxes(self) -> typing.List[str]:
-        return [self.syntax_name + '_' + x['name'] for x
-                in self.vars['types']]
+        return [f'{self.syntax_name}_' + x['name'] for x in self.vars['types']]
 
     def highlight_commands(self) -> typing.List[str]:
-        commands: typing.List[str] = []
-        for t in self.vars['types']:
-            commands.append(
-                'highlight default link {}_{} {}'.format(
-                    self.highlight_name, t['name'], t['highlight']))
-        return commands
+        return [
+            f"highlight default link {self.highlight_name}_{t['name']} {t['highlight']}"
+            for t in self.vars['types']
+        ]

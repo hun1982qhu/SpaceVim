@@ -28,7 +28,7 @@ class Filter(Base):
         self._cache = {}
         start = max([1, context['position'][1] - LINES_MAX])
         linenr = start
-        for line in getlines(self.vim, start, start + LINES_MAX):
+        for line in getlines(self.vim, linenr, linenr + LINES_MAX):
             for m in re.finditer(context['keyword_pattern'], line):
                 k = m.group(0)
                 if k not in self._cache:
@@ -45,8 +45,9 @@ class Filter(Base):
             matched = int(complete_str in word.lower())
             score = -matched * 40
             if word in self._cache:
-                mru = min([abs(x - linenr) for x in self._cache[word]])
+                mru = min(abs(x - linenr) for x in self._cache[word])
                 mru -= LINES_MAX
                 score += mru * 10
             return score
+
         return sorted(context['candidates'], key=compare)

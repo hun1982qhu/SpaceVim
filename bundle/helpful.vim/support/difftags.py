@@ -123,9 +123,7 @@ def repo_tags(path):
         if tag.startswith('untagged-'):
             continue
         tags.append((tag, ref, tag_date))
-    tags.append(('dev', last, None))
-    tags.append(('dev', 'HEAD', None))
-
+    tags.extend((('dev', last, None), ('dev', 'HEAD', None)))
     return tags
 
 

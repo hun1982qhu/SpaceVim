@@ -32,10 +32,13 @@ class Source(Base):
         if not self._cache:
             self._make_cache(context)
 
-        candidates = []
-        for filename in [x for x in self._get_dictionaries(context)
-                         if x in self._cache]:
-            candidates.append(self._cache[filename].candidates)
+        candidates = [
+            self._cache[filename].candidates
+            for filename in [
+                x for x in self._get_dictionaries(context) if x in self._cache
+            ]
+        ]
+
         return {'sorted_candidates': candidates}
 
     def _make_cache(self, context):

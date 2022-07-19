@@ -46,8 +46,7 @@ class Source(Base):
                                current_ft: str, filetype: str) -> int:
         for omnifunc in convert2list(
                 self.get_filetype_var(filetype, 'functions')):
-            if omnifunc == '' and (filetype == current_ft or
-                                   filetype in ['css', 'javascript']):
+            if omnifunc == '' and filetype in [current_ft, 'css', 'javascript']:
                 omnifunc = self.get_buf_option('omnifunc')
             if omnifunc == '':
                 continue
@@ -55,7 +54,7 @@ class Source(Base):
             for input_pattern in convert2list(
                     self.get_filetype_var(filetype, 'input_patterns')):
 
-                m = re.search('(' + input_pattern + ')$', context['input'])
+                m = re.search(f'({input_pattern})$', context['input'])
                 # self.debug(filetype)
                 # self.debug(input_pattern)
                 if input_pattern == '' or (context['event'] !=

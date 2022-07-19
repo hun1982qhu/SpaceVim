@@ -34,7 +34,11 @@ class Filter(Base):
 
 
 def last_find(s: str, needles: typing.List[str]) -> typing.Optional[str]:
-    for needle in needles:
-        if len(s) >= len(needle) and s[-len(needle):] == needle:
-            return needle
-    return None
+    return next(
+        (
+            needle
+            for needle in needles
+            if len(s) >= len(needle) and s[-len(needle) :] == needle
+        ),
+        None,
+    )

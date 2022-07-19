@@ -44,7 +44,7 @@ def setup(vim: Nvim, level: str, output_file: str = '') -> None:
         handler.addFilter(DeopleteLogFilter(vim))
         root.addHandler(handler)
 
-        level = str(level).upper()
+        level = level.upper()
         if level not in ('DEBUG', 'INFO', 'WARN', 'WARNING', 'ERROR',
                          'CRITICAL', 'FATAL'):
             level = 'DEBUG'
@@ -66,8 +66,7 @@ def setup(vim: Nvim, level: str, output_file: str = '') -> None:
 
         if 'deoplete#_logging_notified' not in vim.vars:
             vim.vars['deoplete#_logging_notified'] = 1
-            vim.call('deoplete#util#print_debug', 'Logging to %s' % (
-                output_file))
+            vim.call('deoplete#util#print_debug', f'Logging to {output_file}')
 
 
 def logmethod(func: FUNC) -> typing.Callable[[FUNC], FUNC]:

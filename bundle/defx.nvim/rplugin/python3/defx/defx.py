@@ -72,7 +72,9 @@ class Defx(object):
         root['is_selected'] = False
         root['level'] = 0
         root['root_marker'] = self._context.root_marker + (
-            self._source.name + ':' if self._source.name != 'file' else '')
+            f'{self._source.name}:' if self._source.name != 'file' else ''
+        )
+
         root['word'] = root['root_marker'] + root['word']
 
         return root
@@ -136,11 +138,11 @@ class Defx(object):
         if self._filtered_files != ['']:
             new_candidates = []
             for candidate in candidates:
-                matched = False
-                for glob in self._filtered_files:
-                    if candidate['action__path'].match(glob):
-                        matched = True
-                        break
+                matched = any(
+                    candidate['action__path'].match(glob)
+                    for glob in self._filtered_files
+                )
+
                 if matched or candidate['is_directory']:
                     new_candidates.append(candidate)
             candidates = new_candidates

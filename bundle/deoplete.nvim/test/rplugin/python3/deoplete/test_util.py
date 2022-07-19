@@ -9,8 +9,7 @@ def test_pos():
 
 
 def test_custom():
-    custom = {'source':{}}
-    custom['source'] = {'_': {'mark': ''}, 'java': {'converters': []}}
+    custom = {'source': {'_': {'mark': ''}, 'java': {'converters': []}}}
     assert util.get_custom(custom, 'java', 'mark', 'foobar') == ''
     assert util.get_custom(custom, 'java', 'converters', 'foobar') == []
     assert util.get_custom(custom, 'foo', 'mark', 'foobar') == ''

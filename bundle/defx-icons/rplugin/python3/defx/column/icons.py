@@ -89,15 +89,15 @@ class Column(Base):
         return ''
 
     def syn_item(self, name, opt_name, hi_group_name) -> typing.List[str]:
-        commands: typing.List[str] = []
-        commands.append(f'silent! syntax clear {self.syntax_name}_{name}')
-        commands.append((
-            'syntax match {0}_{1} /[{2}]/ contained containedin={0}'
-        ).format(self.syntax_name, name, self.opts[opt_name]))
-        commands.append('highlight default link {0}_{1} {2}'.format(
-            self.syntax_name, name, hi_group_name
-        ))
-        return commands
+        return [
+            f'silent! syntax clear {self.syntax_name}_{name}',
+            ('syntax match {0}_{1} /[{2}]/ contained containedin={0}').format(
+                self.syntax_name, name, self.opts[opt_name]
+            ),
+            'highlight default link {0}_{1} {2}'.format(
+                self.syntax_name, name, hi_group_name
+            ),
+        ]
 
     def syn_list(self, opt) -> typing.List[str]:
         commands: typing.List[str] = []

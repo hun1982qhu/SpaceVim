@@ -28,9 +28,13 @@ class Source(Base):
         self._drives = self.vim.vars['defx#_drives']
 
     def gather_candidates(self, context: UserContext) -> Candidates:
-        return [{
-            'word': x,
-            'abbr': x + '/',
-            'action__command': f"call defx#call_action('cd', ['{x}'])",
-            'action__path': x,
-        } for x in self._drives if Path(x).exists()]
+        return [
+            {
+                'word': x,
+                'abbr': f'{x}/',
+                'action__command': f"call defx#call_action('cd', ['{x}'])",
+                'action__path': x,
+            }
+            for x in self._drives
+            if Path(x).exists()
+        ]

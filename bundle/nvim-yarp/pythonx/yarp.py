@@ -28,15 +28,14 @@ def on_request(method, args):
     if hasattr(module_obj, method):
         return getattr(module_obj, method)(*args)
     else:
-        raise Exception('method %s not found' % method)
+        raise Exception(f'method {method} not found')
 
 
 def on_notification(method, args):
     if hasattr(module_obj, method):
         getattr(module_obj, method)(*args)
     else:
-        raise Exception('method %s not found' % method)
-    pass
+        raise Exception(f'method {method} not found')
 
 
 def on_setup():
